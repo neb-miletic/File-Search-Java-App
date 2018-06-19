@@ -1,6 +1,8 @@
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -28,40 +30,56 @@ public class FileSearchApp
          case 2: app.setRegex(args[1]);   
          case 1: app.setRegex(args[0]);
       }
-         try
-         {
-            app.walkDirectory(app.getPath());
-         }
-         catch (Exception e)
-         {
-            e.printStackTrace();
-         }  
+      try
+      {
+         app.walkDirectory(app.getPath());
+      }
+      catch (Exception e)
+      {
+         e.printStackTrace();
+      }  
    }
 
-      public void walkDirectory(String path) throws IOException
-      {
-        Files.walk(Paths. get(path))
-        .forEach(f -> processFile(f.toFile()));
-         searchFile(null);
-         addFileToZip(null);
-      }
+   public void walkDirectory(String path) throws IOException
+   {
+      Files.walk(Paths. get(path))
+      .forEach(f -> processFile(f.toFile()));
+      searchFile(null);
+      addFileToZip(null);
+   }
 
-      public void processFile(File file)
-      {
-       System.out.println("processFile: " + file);
-      }
+  
 
-      public void searchFile (File file)
-      {
-         System.out.println("searchFile: " + file);
-      }
+   public boolean searchFile (File file)
+   {
+      return searchFileJava8(file);
+   }
 
-      public void addFileToZip(File file)
-      {
-         System.out.println("AddFileToZip: " + file);
-      }
+   public void addFileToZip(File file)
+   {
+      System.out.println("AddFileToZip: " + file);
+   }
 
-   
+   public boolean searchFileJava8(File file) throws IOException
+   {
+      return Files.lines(file.toPath(), StandardCharsets.UTF_8)
+               .anyMatch(t -> searchText(t));
+   }
+
+   public void processFile (File file)
+   {
+      try
+      {
+         if (searchFile(file))
+            addFileToZip(file);
+      }
+      catch (IOException|UncheckedIOException e)
+      {
+         // TODO: handle exception
+         System.out.println("Error processing file: " + file + ": " + e);
+      }
+   }
+
    public String getPath()
    {
       return path;
